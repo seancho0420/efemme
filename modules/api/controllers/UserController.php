@@ -14,16 +14,33 @@ class UserController extends ActiveController
 {
     public $modelClass = 'app\modules\api\models\User';
 
+    public function behaviors() {
+	    $behaviors = parent::behaviors();
+
+	    // JSON response
+	    $behaviors['contentNegotiator']['formats']['text/html'] = Response::FORMAT_JSON;
+
+	    return $behaviors;
+	}
+
+	public function actions() {
+		$actions = parent::actions();
+
+		// disable index, view, and delete actions
+		unset($actions['index'], $actions['view'], $action['delete']);
+
+    	return $actions;
+	}
+
     // Sign up
     public function actionSignup() {
-    	// JSON response
-    	Yii::$app->response->format = Response::FORMAT_JSON;
-
     	$user = New User();
 
     	$user->attributes = Yii::$app->request->post();
 
+    	// check validation
     	if ($user->validate()) {
+    		// save new user
     		$user->save();
 
     		return array('status' => true, 'data' => array('message' => 'Successfully signed up'));
@@ -33,11 +50,10 @@ class UserController extends ActiveController
     }
 
     public function actionSignin() {
-    	// JSON response
-    	Yii::$app->response->format = Response::FORMAT_JSON;
-
+    	// getting post data
     	$userData = Yii::$app->request->post();
 
+    	// check if the user exists
     	$user = User::findOne(['username' => $userData['username']]);
 
     	if (empty($user)) {
@@ -45,6 +61,7 @@ class UserController extends ActiveController
     	}
 
     	if ($user->validatePassword($userData['password'])) {
+    		// if user is valid, greet
     		return array('status' => true, 'data' => array('message' => 'Hello ' . $userData['username']));
     	} else {
     		throw new \yii\web\ForbiddenHttpException('Invalid credential');
@@ -52,11 +69,10 @@ class UserController extends ActiveController
     }
 
     public function actionChangepassword() {
-    	// JSON response
-    	Yii::$app->response->format = Response::FORMAT_JSON;
-
+    	// getting post data
     	$userData = Yii::$app->request->post();
 
+    	// check if the user exists
     	$user = User::findOne(['username' => $userData['username']]);
 
     	if (empty($user)) {
@@ -67,6 +83,7 @@ class UserController extends ActiveController
     		if (empty($userData['new_password'])) {
     			return array('status' => false, 'data' => array('message' => 'New password required'));
     		} else {
+    			// save new password
     			$user['password'] = $userData['new_password'];
     			$user->save();
 
